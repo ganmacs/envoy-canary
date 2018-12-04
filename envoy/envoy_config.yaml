@@ -1,0 +1,51 @@
+static_resources:
+  listeners:
+  - name: ingress
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 50051
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        config:
+          codec_type: auto
+          stat_prefix: ingress_http
+          access_log:
+          - name: envoy.file_access_log
+            config:
+              format: "%START_TIME%\t%REQ(:METHOD)%\t%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%\t%PROTOCOL%\t%RESPONSE_CODE%\t%RESPONSE_FLAGS%\t%BYTES_RECEIVED%\t%BYTES_SENT%\t%DURATION%\t%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%\t%REQ(X-FORWARDED-FOR)%\t%REQ(USER-AGENT)%\t%REQ(X-REQUEST-ID)%\t%REQ(:AUTHORITY)%\t%UPSTREAM_HOST%\t\n"
+              path: "/dev/stdout"
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: service
+              domains:
+              - "*"
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: backend_service
+          http_filters:
+          - name: envoy.router
+            config: {}
+  clusters:
+  - name: backend_service
+    connect_timeout: 0.25s
+    type: strict_dns
+    lb_policy: round_robin
+    http2_protocol_options: {}
+    hosts:
+    - socket_address:
+        address: "app1"
+        port_value: "8001"
+    - socket_address:
+        address: "app2"
+        port_value: "8002"
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+  access_log_path: "/dev/stdout"

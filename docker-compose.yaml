@@ -1,0 +1,21 @@
+version: '3'
+services:
+  envoy:
+    build: envoy
+    ports:
+      - "9901:9901"
+      - "50051:50051"
+    depends_on:
+      - app1
+      - app2
+    image: front-envoy:0.1
+  app1:
+    build: app
+    image: grpc-ruby:0.1
+    environment:
+      PORT: 8001
+  app2:
+    build: app
+    image: grpc-ruby:0.1
+    environment:
+      PORT: 8002
