@@ -33,16 +33,30 @@ static_resources:
   clusters:
   - name: backend_service
     connect_timeout: 0.25s
-    type: strict_dns
+    type: STRICT_DNS
     lb_policy: round_robin
     http2_protocol_options: {}
-    hosts:
-    - socket_address:
-        address: "app1"
-        port_value: "8001"
-    - socket_address:
-        address: "app2"
-        port_value: "8002"
+    load_assignment:
+      cluster_name: backend_service
+      endpoints:
+        - lb_endpoints:
+          - load_balancing_weight: 100
+            endpoint:
+              address:
+                socket_address:
+                  address: "app1"
+                  port_value: "8001"
+        - lb_endpoints:
+          - load_balancing_weight: 10
+            endpoint:
+              address:
+                socket_address:
+                  address: "app2"
+                  port_value: "8002"
+            metadata:
+              filter_metadata:
+                "envoy.lb":
+                  "canary": true
 admin:
   address:
     socket_address:
